@@ -1,4 +1,4 @@
-# Commission Calculator
+# Rate Calculator
 
 A lightweight PHP application that calculates transaction commissions based on BIN, currency, and amount. It uses external providers to fetch BIN details and exchange rates and applies different commission rates depending on whether the transaction is from an EU country.
 
