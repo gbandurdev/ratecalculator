@@ -4,6 +4,7 @@ namespace App\Tests;
 
 use App\BinProvider\BinProviderInterface;
 use App\CommissionCalculator;
+use App\DTO\TransactionDTO;
 use App\RateProvider\RateProviderInterface;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -52,7 +53,9 @@ class CommissionCalculatorTest extends TestCase
 
         $this->exchangeRateProvider->method('getExchangeRate')->willReturn(1.0);
 
-        $commission = $this->calculator->calculateCommission(100.0, 'EUR', '123456');
+        $transaction = new TransactionDTO(100.0, 'EUR', '123456');
+        $commission = $this->calculator->calculateCommission($transaction);
+
         $this->assertEquals(1.0, $commission);
     }
 
@@ -64,7 +67,9 @@ class CommissionCalculatorTest extends TestCase
 
         $this->exchangeRateProvider->method('getExchangeRate')->willReturn(1.2);
 
-        $commission = $this->calculator->calculateCommission(120.0, 'USD', '123456');
+        $transaction = new TransactionDTO(120.0, 'USD', '123456');
+        $commission = $this->calculator->calculateCommission($transaction);
+
         $this->assertEquals(2.0, $commission);
     }
 
@@ -76,10 +81,10 @@ class CommissionCalculatorTest extends TestCase
 
         $this->exchangeRateProvider->method('getExchangeRate')->willReturn(1.0);
 
-        $commission = $this->calculator->calculateCommission(100.4618, 'EUR', '123456');
-        $this->assertEquals(1.01, $commission);
+        $transaction1 = new TransactionDTO(100.4618, 'EUR', '123456');
+        $transaction2 = new TransactionDTO(100.4600, 'EUR', '123456');
 
-        $commission = $this->calculator->calculateCommission(100.4600, 'EUR', '123456');
-        $this->assertEquals(1.01, $commission);
+        $this->assertEquals(1.01, $this->calculator->calculateCommission($transaction1));
+        $this->assertEquals(1.01, $this->calculator->calculateCommission($transaction2));
     }
 }

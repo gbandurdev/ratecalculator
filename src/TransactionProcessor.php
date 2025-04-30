@@ -2,7 +2,7 @@
 
 namespace App;
 
-use RuntimeException;
+use App\DTO\TransactionDTO;
 
 class TransactionProcessor
 {
@@ -17,27 +17,35 @@ class TransactionProcessor
     {
         $lines = file($filePath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
         foreach ($lines as $line) {
-            $transaction = json_decode($line, true);
-            if ($transaction === null) {
-                throw new RuntimeException('Invalid JSON format in file.');
+            $transactionData = json_decode($line, true);
+
+            if ($transactionData === null) {
+                echo "Error: Invalid JSON format.\n";
+                continue;
             }
 
-            if (!isset($transaction['amount']) || !isset($transaction['currency']) || !isset($transaction['bin'])) {
-                throw new RuntimeException('Invalid transaction data: missing amount, currency, or bin.');
+            if (
+                !isset($transactionData['amount']) ||
+                !isset($transactionData['currency']) ||
+                !isset($transactionData['bin'])
+            ) {
+                echo "Error: Invalid transaction data: missing amount, currency, or bin.\n";
+                continue;
             }
 
             try {
-                $commission = $this->calculator->calculateCommission(
-                    (float) $transaction['amount'],
-                    $transaction['currency'],
-                    $transaction['bin']
+                $transaction = new TransactionDTO(
+                    (float) $transactionData['amount'],
+                    (string) $transactionData['currency'],
+                    (string) $transactionData['bin']
                 );
 
+                $commission = $this->calculator->calculateCommission($transaction);
                 echo $commission . "\n";
-            } catch (RuntimeException $e) {
+
+            } catch (\Throwable $e) {
                 echo 'Error processing transaction: ' . $e->getMessage() . "\n";
             }
         }
     }
-
 }

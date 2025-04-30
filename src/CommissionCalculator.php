@@ -2,9 +2,10 @@
 
 namespace App;
 
+use App\DTO\TransactionDTO;
+use App\DTO\BinDetailsDTO;
 use App\BinProvider\BinProviderInterface;
 use App\RateProvider\RateProviderInterface;
-use RuntimeException;
 
 readonly class CommissionCalculator
 {
@@ -12,28 +13,24 @@ readonly class CommissionCalculator
         private BinProviderInterface  $binProvider,
         private RateProviderInterface $exchangeRateProvider,
         private array                 $euCountries,
-        private float                 $euCommissionRate, // Property promotion for EU commission rate
-        private float                 $nonEuCommissionRate, // Property promotion for non-EU commission rate
+        private float                 $euCommissionRate,
+        private float                 $nonEuCommissionRate,
         private array                 $currencyDecimals
     ) {}
 
-    public function calculateCommission(float $amount, string $currency, string $bin): float
+    public function calculateCommission(TransactionDTO $transaction): float
     {
-        $binDetails = $this->binProvider->getBinDetails($bin);
-        $countryCode = $binDetails['country']['alpha2'] ?? null;
+        $rawBinData = $this->binProvider->getBinDetails($transaction->bin);
+        $binDetails = BinDetailsDTO::fromArray($rawBinData);
 
-        if ($countryCode === null) {
-            throw new RuntimeException('Invalid BIN details: Missing country code.');
-        }
-
-        $isEu = $this->isEu($countryCode);
-        $rate = $this->exchangeRateProvider->getExchangeRate($currency);
-        $amountFixed = $this->convertToEur($amount, $currency, $rate);
+        $isEu = $this->isEu($binDetails->countryCode);
+        $rate = $this->exchangeRateProvider->getExchangeRate($transaction->currency);
+        $amountFixed = $this->convertToEur($transaction->amount, $transaction->currency, $rate);
 
         $commissionRate = $isEu ? $this->euCommissionRate : $this->nonEuCommissionRate;
         $commission = $amountFixed * $commissionRate;
 
-        return $this->roundCommission($commission, $currency);
+        return $this->roundCommission($commission, $transaction->currency);
     }
 
     private function isEu(string $countryCode): bool

@@ -3,6 +3,7 @@
 namespace App\Tests;
 
 use App\CommissionCalculator;
+use App\DTO\TransactionDTO;
 use App\TransactionProcessor;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\TestCase;
@@ -16,7 +17,10 @@ class TransactionProcessorTest extends TestCase
     public function testProcessFile()
     {
         $calculator = $this->createMock(CommissionCalculator::class);
-        $calculator->method('calculateCommission')
+
+        $calculator->expects($this->once())
+            ->method('calculateCommission')
+            ->with($this->isInstanceOf(TransactionDTO::class))
             ->willReturn(1.0);
 
         $filePath = tempnam(sys_get_temp_dir(), 'test');
@@ -47,8 +51,8 @@ class TransactionProcessorTest extends TestCase
 
         $processor = new TransactionProcessor($calculator);
 
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Invalid JSON format in file.');
+        $this->expectOutputRegex('/Error: Invalid JSON format\./');
+
         $processor->processFile($filePath);
 
         unlink($filePath);
@@ -67,8 +71,7 @@ class TransactionProcessorTest extends TestCase
 
         $processor = new TransactionProcessor($calculator);
 
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Invalid transaction data: missing amount, currency, or bin.');
+        $this->expectOutputRegex('/Error: Invalid transaction data: missing amount, currency, or bin\./');
         $processor->processFile($filePath);
 
         unlink($filePath);
