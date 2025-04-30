@@ -21,7 +21,7 @@ A lightweight PHP application that calculates transaction commissions based on B
    composer install
    cp .env.example .env
 
-2. Create a .env file based on .env.example:**
+2. Create a .env file based on .env.example:
     ```bash
     BIN_LOOKUP_URL=https://lookup.binlist.net/
     BIN_LOOKUP_API_KEY=
